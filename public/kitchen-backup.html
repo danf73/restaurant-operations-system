@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kitchen Display System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background: #1a1a1a;
+            color: white;
+            overflow: hidden;
+            height: 100vh;
+        }
+        
+        /* Kitchen display header */
+        .kitchen-header {
+            background: linear-gradient(135deg, #ffcc00 0%, #ffd700 50%, #ffcc00 100%);
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 30px;
+            border-bottom: 4px solid #ff6b35;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        }
+        
+        .golden-arches {
+            font-size: 3em;
+            color: #ff6b35;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            letter-spacing: -5px;
+        }
+        
+        .header-title {
+            color: #333;
+            font-size: 2.2em;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header-info {
+            display: flex;
+            align-items: center;
+            gap: 30px;
+            color: #333;
+            font-weight: bold;
+        }
+        
+        .current-time {
+            font-size: 1.8em;
+            background: #333;
+            color: #ffcc00;
+            padding: 8px 15px;
+            border-radius: 8px;
+            box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.3);
+        }
+        
+        /* Status Lights */
+        .status-lights {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .status-light {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 3px solid #333;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+        }
+        
+        .status-light.green {
+            background: #00ff00;
+            box-shadow: 0 0 15px #00ff00;
+        }
+        
+        .status-light.warning {
+            background: #ffcc00;
+            box-shadow: 0 0 15px #ffcc00;
+            display: none;
+        }
+        
+        .status-light.alert {
+            background: #ff0000;
+            box-shadow: 0 0 15px #ff0000;
+            display: none;
+        }
+        
+        /* Main Content Area */
+        .kvs-body {
+            display: flex;
+            height: calc(100vh - 80px);
+        }
+        
+        /* Left Sidebar */
+        .kvs-sidebar {
+            width: 250px;
+            background: #2c2c2c;
+            border-right: 3px solid #444;
+            padding: 20px;
+        }
+        
+        .status-counters {
+            background: #333;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 2px solid #555;
+        }
+        
+        .counter-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #555;
+        }
+        
+        .counter-item:last-child {
+            border-bottom: none;
+        }
+        
+        .counter-label {
+            font-size: 1.1em;
+            color: #ccc;
+        }
+        
+        .counter-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #ffcc00;
+            min-width: 40px;
+            text-align: right;
+        }
+        
+        .queue-section {
+            background: #333;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 2px solid #555;
+        }
+        
+        .queue-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #ffcc00;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        .queue-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .queue-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 12px;
+            margin: 5px 0;
+            background: #444;
+            border-radius: 5px;
+            border-left: 4px solid #ffcc00;
+        }
+        
+        .queue-number {
+            font-weight: bold;
+            color: #fff;
+        }
+        
+        .queue-time {
+            color: #ccc;
+            font-size: 0.9em;
+        }
+        
+        /* Main Orders Section */
+        .orders-section {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: #1a1a1a;
+        }
+        
+        .orders-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+            max-height: calc(100vh - 140px);
+            overflow-y: auto;
+        }
+        
+        /* Order Tiles */
+        .order-tile {
+            background: #2c2c2c;
+            border: 3px solid #444;
+            border-radius: 15px;
+            padding: 20px;
+            position: relative;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+            transition: all 0.3s ease;
+            min-height: 300px;
+        }
+        
+        .order-tile.new {
+            border-color: #ff6b35;
+            background: linear-gradient(135deg, #2c2c2c 0%, #3a2c2c 100%);
+            animation: newOrderPulse 2s infinite;
+        }
+        
+        .order-tile.preparing {
+            border-color: #ffcc00;
+            background: linear-gradient(135deg, #2c2c2c 0%, #3a3a2c 100%);
+        }
+        
+        .order-tile.ready {
+            border-color: #00ff00;
+            background: linear-gradient(135deg, #2c2c2c 0%, #2c3a2c 100%);
+            animation: readyPulse 1s infinite;
+        }
+        
+        @keyframes newOrderPulse {
+            0%, 100% { 
+                transform: scale(1);
+                box-shadow: 0 8px 25px rgba(255, 107, 53, 0.3);
+            }
+            50% { 
+                transform: scale(1.02);
+                box-shadow: 0 12px 35px rgba(255, 107, 53, 0.6);
+            }
+        }
+        
+        @keyframes readyPulse {
+            0%, 100% { 
+                box-shadow: 0 8px 25px rgba(0, 255, 0, 0.3);
+            }
+            50% { 
+                box-shadow: 0 12px 35px rgba(0, 255, 0, 0.6);
+            }
+        }
+        
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #444;
+        }
+        
+        .order-number {
+            font-size: 2.2em;
+            font-weight: bold;
+            color: #ffcc00;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+        }
+        
+        .order-timer {
+            font-size: 1.8em;
+            font-weight: bold;
+            padding: 8px 15px;
+            border-radius: 8px;
+            background: #000;
+            border: 2px solid #444;
+            min-width: 80px;
+            text-align: center;
+        }
+        
+        .timer-normal {
+            color: #fff;
+            border-color: #444;
+        }
+        
+        .timer-warning {
+            color: #ffcc00;
+            border-color: #ffcc00;
+            animation: timerWarning 1s infinite;
+        }
+        
+        .timer-critical {
+            color: #ff0000;
+            border-color: #ff0000;
+            animation: timerCritical 0.5s infinite;
+        }
+        
+        @keyframes timerWarning {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        @keyframes timerCritical {
+            0%, 100% { transform: scale(1); background: #000; }
+            50% { transform: scale(1.1); background: #330000; }
+        }
+        
+        .order-type {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: #ff6b35;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+        
+        .customer-info {
+            font-size: 1.2em;
+            color: #ccc;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: #333;
+            border-radius: 8px;
+            border-left: 4px solid #ffcc00;
+        }
+        
+        .order-items {
+            margin-bottom: 20px;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+        
+        .order-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            margin: 8px 0;
+            background: #1a1a1a;
+            border-radius: 8px;
+            border: 1px solid #444;
+        }
+        
+        .item-details {
+            flex: 1;
+        }
+        
+        .item-name {
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #fff;
+            margin-bottom: 4px;
+        }
+        
+        .item-mods {
+            font-size: 0.9em;
+            color: #ffcc00;
+            font-style: italic;
+        }
+        
+        .item-quantity {
+            font-size: 1.4em;
+            font-weight: bold;
+            color: #ffcc00;
+            background: #333;
+            border-radius: 50%;
+            width: 35px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #555;
+        }
+        
+        .action-buttons {
+            margin-top: 15px;
+        }
+        
+        .action-btn {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.2em;
+            font-weight: bold;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .start-btn {
+            background: linear-gradient(135deg, #ff6b35, #ff8c42);
+            color: white;
+            box-shadow: 0 4px 15px rgba(255, 107, 53, 0.4);
+        }
+        
+        .start-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 107, 53, 0.6);
+        }
+        
+        .ready-btn {
+            background: linear-gradient(135deg, #ffcc00, #ffd700);
+            color: #333;
+            box-shadow: 0 4px 15px rgba(255, 204, 0, 0.4);
+        }
+        
+        .ready-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 204, 0, 0.6);
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px;
+            color: #666;
+            font-size: 1.5em;
+        }
+        
+        /* Sound Alert */
+        .sound-alert {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #ff6b35;
+            color: white;
+            padding: 30px 50px;
+            border-radius: 15px;
+            font-size: 2em;
+            font-weight: bold;
+            z-index: 1000;
+            animation: alertPulse 0.5s ease-in-out;
+            box-shadow: 0 10px 30px rgba(255, 107, 53, 0.6);
+        }
+        
+        @keyframes alertPulse {
+            0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0; }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+        
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #1a1a1a;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #ffcc00;
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #ffd700;
+        }
+    </style>
+</head>
+<body>
+    <!-- Kitchen display header -->
+    <div class="kitchen-header">
+        <div class="golden-arches">M</div>
+        <div class="header-title">Kitchen Video Screen</div>
+        <div class="header-info">
+            <div class="status-lights">
+                <div class="status-light green"></div>
+                <div class="status-light warning" id="warningLight"></div>
+                <div class="status-light alert" id="alertLight"></div>
+            </div>
+            <div class="current-time" id="currentTime">00:00:00</div>
+        </div>
+    </div>
+
+    <!-- Main KVS Body -->
+    <div class="kvs-body">
+        <!-- Left Sidebar -->
+        <div class="kvs-sidebar">
+            <div class="status-counters">
+                <div class="counter-item">
+                    <div class="counter-label">NEW</div>
+                    <div class="counter-value" id="newCount">0</div>
+                </div>
+                <div class="counter-item">
+                    <div class="counter-label">PREP</div>
+                    <div class="counter-value" id="prepCount">0</div>
+                </div>
+                <div class="counter-item">
+                    <div class="counter-label">READY</div>
+                    <div class="counter-value" id="readyCount">0</div>
+                </div>
+                <div class="counter-item">
+                    <div class="counter-label">AVG TIME</div>
+                    <div class="counter-value" id="avgTime">0:00</div>
+                </div>
+            </div>
+            
+            <div class="queue-section">
+                <div class="queue-title">ORDER QUEUE</div>
+                <div class="queue-list" id="queueList">
+                    <!-- Queue items will be populated here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Orders Section -->
+        <div class="orders-section">
+            <div class="orders-grid" id="ordersSection">
+                <!-- Order tiles will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        let orders = [];
+        let soundEnabled = true;
+        
+        function updateCurrentTime() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString([], { 
+                hour: '2-digit', 
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false 
+            });
+            document.getElementById('currentTime').textContent = timeString;
+        }
+        
+        function playKitchenAlert() {
+            if (soundEnabled) {
+                // Kitchen alert sound
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                
+                // Create a short sequence of alert beeps
+                const frequencies = [800, 600, 800];
+                let delay = 0;
+                
+                frequencies.forEach((freq, index) => {
+                    setTimeout(() => {
+                        const oscillator = audioContext.createOscillator();
+                        const gainNode = audioContext.createGain();
+                        
+                        oscillator.connect(gainNode);
+                        gainNode.connect(audioContext.destination);
+                        
+                        oscillator.frequency.setValueAtTime(freq, audioContext.currentTime);
+                        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+                        
+                        oscillator.start();
+                        oscillator.stop(audioContext.currentTime + 0.2);
+                    }, delay);
+                    delay += 200;
+                });
+            }
+        }
+        
+        function showAlert(message) {
+            const alert = document.createElement('div');
+            alert.className = 'sound-alert';
+            alert.textContent = message;
+            document.body.appendChild(alert);
+            
+            setTimeout(() => {
+                if (document.body.contains(alert)) {
+                    document.body.removeChild(alert);
+                }
+            }, 3000);
+        }
+        
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+        
+        function getTimeSince(timestamp) {
+            const now = new Date();
+            const orderTime = new Date(timestamp);
+            const diffInSeconds = Math.floor((now - orderTime) / 1000);
+            return diffInSeconds;
+        }
+        
+        function getTimerClass(elapsed, estimated) {
+            const ratio = elapsed / estimated;
+            if (ratio > 1.5) return 'timer-critical';
+            if (ratio > 1.0) return 'timer-warning';
+            return 'timer-normal';
+        }
+        
+        function renderOrders() {
+            const container = document.getElementById('ordersSection');
+            const kitchenOrders = orders.filter(order => 
+                order.status === 'new' || order.status === 'preparing' || order.status === 'ready'
+            );
+            
+            if (kitchenOrders.length === 0) {
+                container.innerHTML = '<div class="empty-state">Waiting for orders...</div>';
+                updateSidebar();
+                return;
+            }
+            
+            // Sort orders: new first, then by time
+            kitchenOrders.sort((a, b) => {
+                if (a.status === 'new' && b.status !== 'new') return -1;
+                if (b.status === 'new' && a.status !== 'new') return 1;
+                return new Date(a.timestamp) - new Date(b.timestamp);
+            });
+            
+            container.innerHTML = kitchenOrders.map(order => {
+                const elapsed = order.status === 'preparing' && order.startTime ? 
+                    getTimeSince(order.startTime) : getTimeSince(order.timestamp);
+                const timerClass = getTimerClass(elapsed, order.estimatedTime || 90);
+                
+                return `
+                    <div class="order-tile ${order.status}" id="order-${order.id}">
+                        <div class="order-type">${order.orderType || 'Dine In'}</div>
+                        
+                        <div class="order-header">
+                            <div class="order-number">${order.orderNumber.toString().padStart(3, '0')}</div>
+                            <div class="order-timer ${timerClass}" id="timer-${order.id}">
+                                ${formatTime(elapsed)}
+                            </div>
+                        </div>
+                        
+                        <div class="customer-info">
+                            ${order.customerName || 'Guest'} ${order.customerPhone ? '• ' + order.customerPhone.slice(-4) : ''}
+                        </div>
+                        
+                        <div class="order-items">
+                            ${order.items.map(item => `
+                                <div class="order-item">
+                                    <div class="item-details">
+                                        <div class="item-name">${item.name}</div>
+                                        <div class="item-mods">${item.mods || ''}</div>
+                                    </div>
+                                    <div class="item-quantity">${item.quantity}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        
+                        <div class="action-buttons">
+                            ${order.status === 'new' ? `
+                                <button class="action-btn start-btn" onclick="startOrder('${order.id}')">
+                                    START PREP
+                                </button>
+                            ` : ''}
+                            
+                            ${order.status === 'preparing' ? `
+                                <button class="action-btn ready-btn" onclick="markReady('${order.id}')">
+                                    COMPLETE
+                                </button>
+                            ` : ''}
+                            
+                            ${order.status === 'ready' ? `
+                                <div style="text-align: center; color: #00ff00; font-weight: bold; padding: 15px; background: rgba(0, 255, 0, 0.1); border-radius: 8px;">
+                                    ✓ READY FOR PICKUP
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            updateSidebar();
+        }
+        
+        function updateSidebar() {
+            const newCount = orders.filter(o => o.status === 'new').length;
+            const prepCount = orders.filter(o => o.status === 'preparing').length;
+            const readyCount = orders.filter(o => o.status === 'ready').length;
+            
+            document.getElementById('newCount').textContent = newCount;
+            document.getElementById('prepCount').textContent = prepCount;
+            document.getElementById('readyCount').textContent = readyCount;
+            
+            // Update warning lights
+            const warningLight = document.getElementById('warningLight');
+            const alertLight = document.getElementById('alertLight');
+            
+            if (prepCount > 5 || readyCount > 3) {
+                warningLight.style.display = 'block';
+            } else {
+                warningLight.style.display = 'none';
+            }
+            
+            if (newCount > 8) {
+                alertLight.style.display = 'block';
+            } else {
+                alertLight.style.display = 'none';
+            }
+            
+            // Update queue
+            const queueList = document.getElementById('queueList');
+            const queueOrders = orders
+                .filter(o => o.status === 'new')
+                .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
+                .slice(0, 8);
+            
+            queueList.innerHTML = queueOrders.map(order => `
+                <div class="queue-item">
+                    <div class="queue-number">#${order.orderNumber.toString().padStart(3, '0')}</div>
+                    <div class="queue-time">${formatTime(getTimeSince(order.timestamp))} ago</div>
+                </div>
+            `).join('');
+            
+            // Calculate average time
+            const completedOrders = orders.filter(o => 
+                o.status === 'completed' && o.startTime && o.readyTime
+            );
+            
+            if (completedOrders.length > 0) {
+                const avgTime = completedOrders.reduce((sum, order) => {
+                    const prepTime = (new Date(order.readyTime) - new Date(order.startTime)) / 1000;
+                    return sum + prepTime;
+                }, 0) / completedOrders.length;
+                document.getElementById('avgTime').textContent = formatTime(Math.round(avgTime));
+            }
+        }
+        
+        function updateOrderTimers() {
+            orders.forEach(order => {
+                const timerElement = document.getElementById(`timer-${order.id}`);
+                if (timerElement) {
+                    const elapsed = order.status === 'preparing' && order.startTime ? 
+                        getTimeSince(order.startTime) : getTimeSince(order.timestamp);
+                    const timerClass = getTimerClass(elapsed, order.estimatedTime || 90);
+                    
+                    timerElement.textContent = formatTime(elapsed);
+                    timerElement.className = `order-timer ${timerClass}`;
+                }
+            });
+        }
+        
+        function startOrder(orderId) {
+            fetch(`/api/orders/${orderId}/status`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: 'preparing' })
+            })
+            .catch(error => console.error('Error updating order:', error));
+        }
+        
+        function markReady(orderId) {
+            fetch(`/api/orders/${orderId}/status`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: 'ready' })
+            })
+            .catch(error => console.error('Error updating order:', error));
+            
+            // Play completion sound
+            playKitchenAlert();
+            showAlert('ORDER READY!');
+        }
+        
+        // Socket event listeners
+        socket.on('ordersUpdate', (updatedOrders) => {
+            orders = updatedOrders;
+            renderOrders();
+        });
+        
+        socket.on('newOrder', (order) => {
+            playKitchenAlert();
+            showAlert(`NEW ORDER #${order.orderNumber.toString().padStart(3, '0')}`);
+            
+            // Flash the new order
+            setTimeout(() => {
+                const orderElement = document.getElementById(`order-${order.id}`);
+                if (orderElement) {
+                    orderElement.style.animation = 'newOrderPulse 1s ease-in-out 3';
+                }
+            }, 100);
+        });
+        
+        socket.on('orderStatusUpdate', (data) => {
+            const order = orders.find(o => o.id === data.orderId);
+            if (order) {
+                order.status = data.status;
+                renderOrders();
+            }
+        });
+        
+        // Update timers every second
+        setInterval(updateOrderTimers, 1000);
+        
+        // Update current time every second
+        setInterval(updateCurrentTime, 1000);
+        updateCurrentTime();
+        
+        // Initial load
+        fetch('/api/orders')
+            .then(response => response.json())
+            .then(data => {
+                orders = data;
+                renderOrders();
+            });
+            
+        // Keyboard shortcuts for the kitchen display
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'F1') {
+                e.preventDefault();
+                soundEnabled = !soundEnabled;
+                showAlert(soundEnabled ? 'SOUND ON' : 'SOUND OFF');
+            }
+        });
+    </script>
+</body>
+</html>
