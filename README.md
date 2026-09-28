@@ -46,6 +46,48 @@ npm start
 | `/assembly` | Order assembly |
 | `/manager` | Manager dashboard |
 
+## NimbusCMS application
+
+The `plugin/` directory contains the new NimbusCMS-native application layer. It
+keeps restaurant-specific data in its own `rest_*` tables and now provides the
+following operational verticals:
+
+- Floor tables and live table status
+- Dine-in and online order records
+- Kitchen queue data
+- Reservations
+- Simulated payment settlement records and payment status fields
+- Revenue, order, and popular-item reports
+- A simulated online-order endpoint suitable for a public storefront
+
+The plugin follows NimbusCMS's Composer plugin contract, reads a published
+`menu_items` collection through Nimbus's read-only content capability, and uses
+capability-gated admin access plus `/ext/restaurant-operations/*` endpoints. It
+is designed to be installed into a Nimbus site alongside the CMS:
+
+```bash
+cd plugin
+composer install
+```
+
+Then add the plugin as a Composer path repository in the Nimbus site:
+
+```json
+{
+  "repositories": [
+    { "type": "path", "url": "../restaurant-operations/plugin" }
+  ],
+  "require": {
+    "danf73/restaurant-operations": "*"
+  }
+}
+```
+
+Run Nimbus migrations after installation. The online ordering and payment flows
+are intentionally simulated; production use still requires a payment provider,
+webhook verification, staff authentication, auditing, and deployment-specific
+rate limiting.
+
 ## Order lifecycle
 
 `New -> Preparing -> Ready -> Completed`

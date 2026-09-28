@@ -1,0 +1,35 @@
+{
+  "name": "danf73/restaurant-operations",
+  "description": "Restaurant operations application for NimbusCMS: floor, orders, kitchen, payments, reservations, reports, and online ordering.",
+  "type": "nimbuscms-plugin",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "danf73"
+    }
+  ],
+  "require": {
+    "php": ">=8.2",
+    "ext-json": "*",
+    "nimbuscms/nimbus": "dev-main"
+  },
+  "repositories": [
+    {
+      "type": "vcs",
+      "url": "https://github.com/NimbusCMS/nimbus"
+    }
+  ],
+  "autoload": {
+    "psr-4": {
+      "Danf73\\RestaurantOperations\\": "src/"
+    }
+  },
+  "extra": {
+    "nimbus": {
+      "id": "danf73.restaurant-operations",
+      "plugin": "Danf73\\RestaurantOperations\\RestaurantPlugin"
+    }
+  },
+  "minimum-stability": "dev",
+  "prefer-stable": true
+}
