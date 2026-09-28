@@ -59,6 +59,22 @@ Orders are held in memory and reset whenever the server restarts. This makes the
 - The server exposes REST endpoints for menu and orders and Socket.IO events for live updates.
 - Legacy interface experiments are retained in `public/kitchen-old.html` and `public/kitchen-backup.html` for reference.
 
+## Ideas and roadmap
+
+This project is intentionally small enough to run locally, but it has room to grow. The current release includes the first four ideas below:
+
+- [x] Persist an unfinished kiosk cart in the browser so a refresh does not lose an order.
+- [x] Validate order items and calculate the total on the server before an order reaches the kitchen.
+- [x] Give kiosk customers clear loading, success, and error feedback when an order is submitted.
+- [x] Improve kiosk form accessibility with labels, status announcements, and browser autocomplete.
+- [ ] Add table and floor management for dine-in service.
+- [ ] Add reservations and a simple waitlist.
+- [ ] Add a payment-provider boundary so demo orders can later support real payments safely.
+- [ ] Replace in-memory storage with a database and add authenticated staff accounts.
+- [ ] Add customer order tracking from `new` through `completed`.
+
+The floor, reservation, payment, and online-ordering concepts were informed by reviewing the public feature set of [DanMat/Restaurant-Management-System](https://github.com/DanMat/Restaurant-Management-System). No source code from that project is included here.
+
 ## Origin
 
 This project started as a personal product idea and was built iteratively with the help of an LLM. The architecture, requirements, testing, and final decisions remain part of the project author's learning process.

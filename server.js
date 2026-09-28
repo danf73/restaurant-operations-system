@@ -774,22 +774,38 @@ app.get('/api/orders', (req, res) => {
 
 app.post('/api/orders', (req, res) => {
   const { items, total, customerName, customerPhone, specialInstructions, loyaltyId } = req.body;
-  
+
+  if (!Array.isArray(items) || items.length === 0) {
+    return res.status(400).json({ error: 'An order must contain at least one item' });
+  }
+
+  const normalizedItems = items.map(item => {
+    const menuItem = menuItems.find(mi => mi.id === item.id);
+    const quantity = Number(item.quantity);
+    return menuItem && Number.isInteger(quantity) && quantity > 0
+      ? { ...menuItem, quantity }
+      : null;
+  });
+
+  if (normalizedItems.some(item => !item)) {
+    return res.status(400).json({ error: 'Order contains an invalid menu item or quantity' });
+  }
+
+  const calculatedTotal = normalizedItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
   const order = {
     id: uuidv4(),
     orderNumber: orderCounter++,
-    items,
-    total,
+    items: normalizedItems,
+    total: Number(calculatedTotal.toFixed(2)),
     customerName: customerName || `Order #${orderCounter - 1}`,
     customerPhone: customerPhone || null,
     specialInstructions: specialInstructions || '',
     loyaltyId: loyaltyId || null,
     status: ORDER_STATUS.NEW,
     timestamp: new Date(),
-    estimatedTime: Math.max(...items.map(item => 
-      menuItems.find(mi => mi.id === item.id)?.prepTime || 0
-    )),
-    priority: items.length > 5 ? 'high' : 'normal',
+    estimatedTime: Math.max(...normalizedItems.map(item => item.prepTime)),
+    priority: normalizedItems.reduce((sum, item) => sum + item.quantity, 0) > 5 ? 'high' : 'normal',
     orderType: 'dine-in' // Could be 'takeaway', 'delivery'
   };
 
